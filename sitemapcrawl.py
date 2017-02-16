@@ -1,0 +1,26 @@
+import base64
+import gzip
+
+import redis
+from scrapy import cmdline
+from scrapy.spiders import SitemapSpider
+import os
+
+BASE_OUTPUT_DIR = os.environ.get("BASE_OUTPUT_DIR")
+
+
+class MySpider(SitemapSpider):
+    name = 'lyrics'
+    sitemap_urls = ['http://lyrics.wikia.com/sitemap-newsitemapxml-index.xml']
+    sitemap_rules = [('/wiki/', 'parse_sitemap_url')]
+
+    def parse_sitemap_url(self, response):
+        fname = response.url.split('/')[-1]
+        print(response)
+        writable = base64.b64encode(gzip.compress(response.body))
+        with open(os.path.join(BASE_OUTPUT_DIR + '%s') % fname, 'wb') as f:
+            f.write(writable)
+
+
+# --set JOBDIR=lyrics2
+cmdline.execute("scrapy runspider sitemapcrawl.py --set JOBDIR=lyrics".split())
