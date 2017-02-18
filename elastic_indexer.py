@@ -15,5 +15,5 @@ for f in glob.glob(os.path.join(DATA_BASEPATH, "*")):
     actions = [dict(_index=ES_INDEX,
                     _type=ES_TYPE,
                     _id="%s:%s" % (x['artist']['unique_name'], x['href']),
-                    _body=x) for x in song_dict]
+                    _source=x) for x in song_dict]
     helpers.bulk(es, actions)
