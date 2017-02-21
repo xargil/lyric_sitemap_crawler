@@ -2,9 +2,7 @@ from scrapy import cmdline
 import scrapy
 from bs4 import BeautifulSoup
 from DataHandlers import elastic_handler
-import time
-import Model.artist_url
-from Model.artist_url import artist_url
+from SpidersConfiguration.shironet_config import shironet_config
 
 
 def removeHTMLCharachters(raw_text):
@@ -12,19 +10,15 @@ def removeHTMLCharachters(raw_text):
 
 class ShironetSpider(scrapy.Spider):
     name = "shironet"
-    BASE_URL = "http://shironet.mako.co.il"
-    SPIDER_AGENTS = {'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/56.0.2924.87 Safari/537.36'}
-    SPIDER_COOKIES = {'rbzid': 'a21VNy8wdmdRT2ZPTWU5TVRyeXAyQWRoaWEwWHVvdVJWNXdjeGVGbXZyaVFIV0NOTVNWaEtHWEhNUVJrZitsWkpjZ2VZMHVsejB3d0NkTWFZUU5jaEdzaHBxVmJRUVI0elVqZ0xBTFhjOUFaOVNORGZmbStpZmlZQWxJdHBuK1l1UlJCSnBaMFJmQXErT0hWYjVkdmJRM1lXMnBEMm9KR1FFMEp2NVNKdXNESng5ekYyQ2Z4K3JxVExPcDRlR2lWSjdYcVBzWEVNOXB5L2dlVzBjUXhDZz09QEBAMEBAQC0xNDgxNDgxNDY4MA'}
+    BASE_URL = shironet_config.SHIRONET_BASE_URL
+    SPIDER_AGENTS = shironet_config.SHIRONET_AGENT
+    SPIDER_COOKIES = shironet_config.SHIRONET_COOKIE
 
     def __init__(self):
         self.es_handler = elastic_handler.ElasticSeachHandler()
 
     def start_requests(self):
-        artist_urls = [
-            artist_url("Dor Daniel",'http://shironet.mako.co.il/artist?type=works&lang=1&prfid=1333')
-        ]
-
-        for curr_artist in artist_urls:
+        for curr_artist in shironet_config.ARTISTS_URLS:
             yield scrapy.Request(url=curr_artist.url,
                                  meta={"artist_name": curr_artist.english_name},
                                  headers=self.SPIDER_AGENTS,
@@ -78,6 +72,9 @@ class ShironetSpider(scrapy.Spider):
                 album_year = 1
             song_name = response.css(".artist_song_name_txt > h1::text").extract_first()
             song_lyrics = removeHTMLCharachters(response.css(".artist_lyrics_text").extract_first())
+            song_number = response.url[response.url.index("wrkid") + 6:]
+            song_id_raw = artist_name + " " + song_number
+            song_id = song_id_raw.replace(" ", "_")
 
             song = {
                 "title": song_name,
@@ -91,8 +88,8 @@ class ShironetSpider(scrapy.Spider):
                 "lyrics": song_lyrics
             }
 
-            self.es_handler.index_song(song)
+            self.es_handler.index_song(song, song_id)
 
-            print("Song {0} of {1} was scraped".format(song_name, artist_name))
+            print("Song {0} was scraped".format(song_id))
 
 cmdline.execute("scrapy runspider shironet_spider.py".split())

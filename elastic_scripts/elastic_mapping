@@ -1,0 +1,50 @@
+PUT allsonglyrics/
+{
+    "mappings": {
+      "song": {
+        "properties": {
+          "album": {
+            "properties": {
+              "title": {
+                "type": "text",
+                "fields": {
+                  "keyword": {
+                    "type": "keyword",
+                    "ignore_above": 256
+                  }
+                }
+              },
+              "year": {
+                "type": "long"
+              }
+            }
+          },
+          "artist": {
+            "properties": {
+              "unique_name": {
+                "type":  "keyword"
+              }
+            }
+          },
+          "lyrics": {
+            "type": "text",
+            "fields": {
+              "keyword": {
+                "type": "keyword",
+                "ignore_above": 256
+              }
+            }
+          },
+          "title": {
+            "type": "text",
+            "fields": {
+              "keyword": {
+                "type": "keyword",
+                "ignore_above": 256
+              }
+            }
+          }
+        }
+      }
+    }
+}
