@@ -13,9 +13,13 @@ class ShironetSpider(scrapy.Spider):
     BASE_URL = shironet_config.SHIRONET_BASE_URL
     SPIDER_AGENTS = shironet_config.SHIRONET_AGENT
     SPIDER_COOKIES = shironet_config.SHIRONET_COOKIE
+    number_of_scrapped_songs = 0
 
     def __init__(self):
         self.es_handler = elastic_handler.ElasticSeachHandler()
+
+    def close(self, reason):
+        print("\n\nTotal songs scrapped :{0}\n\n".format(self.number_of_scrapped_songs))
 
     def start_requests(self):
         for curr_artist in shironet_config.ARTISTS_URLS:
@@ -89,6 +93,7 @@ class ShironetSpider(scrapy.Spider):
             }
 
             self.es_handler.index_song(song, song_id)
+            self.number_of_scrapped_songs += 1
 
             print("Song {0} was scraped".format(song_id))
 
