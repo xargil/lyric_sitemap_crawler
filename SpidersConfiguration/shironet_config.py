@@ -29,5 +29,7 @@ class shironet_config:
         #artist_url("Keren Peles", ARTIST_PAGE_PREFIX + '4314')
         #artist_url("Assaf Amdursky", ARTIST_PAGE_PREFIX + '150')
         #artist_url("Avraham Tal", ARTIST_PAGE_PREFIX + '7335')
-        artist_url("Mashina", ARTIST_PAGE_PREFIX + '686')
+        #artist_url("Mashina", ARTIST_PAGE_PREFIX + '686')
+        artist_url("Yehoram Gaon", ARTIST_PAGE_PREFIX + '465')
+
     ]
