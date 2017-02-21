@@ -1,65 +1,146 @@
 import base64
+import concurrent.futures
 import glob
 import gzip
-
+import json
+from collections import defaultdict
+from copy import deepcopy
+import logging
 from lxml import html
+import os
 
-t = '''&#73;&#110;&#32;&#109;&#121;&#32;&#101;&#121;&#101;&#115;&#44;&#32;&#73;&#39;&#109;&#32;&#110;&#111;&#116;&#32;&#108;&#97;&#122;&#121;<br />&#73;&#110;&#32;&#109;&#121;&#32;&#102;&#97;&#99;&#101;&#44;&#32;&#105;&#116;&#39;&#115;&#32;&#110;&#111;&#116;&#32;&#111;&#118;&#101;&#114;<br />&#73;&#110;&#32;&#121;&#111;&#117;&#114;&#32;&#114;&#111;&#111;&#109;&#44;&#32;&#73;&#39;&#109;&#32;&#110;&#111;&#116;&#32;&#111;&#108;&#100;&#101;&#114;<br />&#73;&#110;&#32;&#121;&#111;&#117;&#114;&#32;&#101;&#121;&#101;&#115;&#44;&#32;&#73;&#39;&#109;&#32;&#110;&#111;&#116;&#32;&#119;&#111;&#114;&#116;&#104;&#32;&#105;&#116;<br />&#71;&#105;&#109;&#109;&#101;&#32;&#98;&#97;&#99;&#107;&#32;&#109;&#121;&#32;&#97;&#108;&#99;&#111;&#104;&#111;&#108;<br />&#71;&#105;&#109;&#109;&#101;&#32;&#98;&#97;&#99;&#107;&#32;&#109;&#121;&#32;&#97;&#108;&#99;&#111;&#104;&#111;&#108;<br />&#71;&#105;&#109;&#109;&#101;&#32;&#98;&#97;&#99;&#107;&#32;&#109;&#121;&#32;&#97;&#108;&#99;&#111;&#104;&#111;&#108;<br />&#71;&#105;&#109;&#109;&#101;&#32;&#98;&#97;&#99;&#107;&#32;&#109;&#121;&#32;&#97;&#108;&#99;&#111;&#104;&#111;&#108;<br />&#71;&#105;&#109;&#109;&#101;&#32;&#98;&#97;&#99;&#107;&#32;&#109;&#121;&#32;&#97;&#108;&#99;&#111;&#104;&#111;&#108;<br />&#71;&#105;&#109;&#109;&#101;&#32;&#98;&#97;&#99;&#107;&#32;&#109;&#121;&#32;&#97;&#108;&#99;&#111;&#104;&#111;&#108;<br />&#71;&#105;&#109;&#109;&#101;&#32;&#98;&#97;&#99;&#107;&#32;&#109;&#121;&#32;&#97;&#108;&#99;&#111;&#104;&#111;&#108;<br /><br />&#72;&#101;&#97;&#108;&#32;&#97;&#32;&#109;&#105;&#108;&#108;&#105;&#111;&#110;&#44;&#32;&#107;&#105;&#108;&#108;&#32;&#97;&#32;&#109;&#105;&#108;&#108;&#105;&#111;&#110;<br />&#72;&#101;&#97;&#108;&#32;&#97;&#32;&#109;&#105;&#108;&#108;&#105;&#111;&#110;&#44;&#32;&#107;&#105;&#108;&#108;&#32;&#97;&#32;&#109;&#105;&#108;&#108;&#105;&#111;&#110;<br />&#72;&#101;&#97;&#108;&#32;&#97;&#32;&#109;&#105;&#108;&#108;&#105;&#111;&#110;&#44;&#32;&#107;&#105;&#108;&#108;&#32;&#97;&#32;&#109;&#105;&#108;&#108;&#105;&#111;&#110;<br /><br />&#73;&#110;&#32;&#109;&#121;&#32;&#101;&#121;&#101;&#115;&#44;&#32;&#73;&#39;&#109;&#32;&#110;&#111;&#116;&#32;&#108;&#97;&#122;&#121;<br />&#73;&#110;&#32;&#109;&#121;&#32;&#102;&#97;&#99;&#101;&#44;&#32;&#105;&#116;&#39;&#115;&#32;&#110;&#111;&#116;&#32;&#111;&#118;&#101;&#114;<br />&#73;&#110;&#32;&#121;&#111;&#117;&#114;&#32;&#114;&#111;&#111;&#109;&#44;&#32;&#73;&#39;&#109;&#32;&#110;&#111;&#116;&#32;&#111;&#108;&#100;&#101;&#114;<br />&#73;&#110;&#32;&#121;&#111;&#117;&#114;&#32;&#101;&#121;&#101;&#115;&#44;&#32;&#73;&#39;&#109;&#32;&#110;&#111;&#116;&#32;&#119;&#111;&#114;&#116;&#104;&#32;&#105;&#116;<br />&#71;&#105;&#109;&#109;&#101;&#32;&#98;&#97;&#99;&#107;&#32;&#109;&#121;&#32;&#97;&#108;&#99;&#111;&#104;&#111;&#108;<br />&#71;&#105;&#109;&#109;&#101;&#32;&#98;&#97;&#99;&#107;&#32;&#109;&#121;&#32;&#97;&#108;&#99;&#111;&#104;&#111;&#108;<br />&#71;&#105;&#109;&#109;&#101;&#32;&#98;&#97;&#99;&#107;&#32;&#109;&#121;&#32;&#97;&#108;&#99;&#111;&#104;&#111;&#108;<br />&#71;&#105;&#109;&#109;&#101;&#32;&#98;&#97;&#99;&#107;&#32;&#109;&#121;&#32;&#97;&#108;&#99;&#111;&#104;&#111;&#108;<br />&#71;&#105;&#109;&#109;&#101;&#32;&#98;&#97;&#99;&#107;&#32;&#109;&#121;&#32;&#97;&#108;&#99;&#111;&#104;&#111;&#108;<br />&#71;&#105;&#109;&#109;&#101;&#32;&#98;&#97;&#99;&#107;&#32;&#109;&#121;&#32;&#97;&#108;&#99;&#111;&#104;&#111;&#108;<br />&#71;&#105;&#109;&#109;&#101;&#32;&#98;&#97;&#99;&#107;&#32;&#109;&#121;&#32;&#97;&#108;&#99;&#111;&#104;&#111;&#108;<br /><br />&#72;&#101;&#97;&#108;&#32;&#97;&#32;&#109;&#105;&#108;&#108;&#105;&#111;&#110;&#44;&#32;&#107;&#105;&#108;&#108;&#32;&#97;&#32;&#109;&#105;&#108;&#108;&#105;&#111;&#110;<br />&#72;&#101;&#97;&#108;&#32;&#97;&#32;&#109;&#105;&#108;&#108;&#105;&#111;&#110;&#44;&#32;&#107;&#105;&#108;&#108;&#32;&#97;&#32;&#109;&#105;&#108;&#108;&#105;&#111;&#110;<br />&#72;&#101;&#97;&#108;&#32;&#97;&#32;&#109;&#105;&#108;&#108;&#105;&#111;&#110;&#44;&#32;&#107;&#105;&#108;&#108;&#32;&#97;&#32;&#109;&#105;&#108;&#108;&#105;&#111;&#110;<br /><br />&#73;&#110;&#32;&#109;&#121;&#32;&#101;&#121;&#101;&#115;&#44;&#32;&#73;&#39;&#109;&#32;&#110;&#111;&#116;&#32;&#108;&#97;&#122;&#121;<br />&#73;&#110;&#32;&#109;&#121;&#32;&#102;&#97;&#99;&#101;&#44;&#32;&#105;&#116;&#39;&#115;&#32;&#110;&#111;&#116;&#32;&#111;&#118;&#101;&#114;<br />&#73;&#110;&#32;&#121;&#111;&#117;&#114;&#32;&#114;&#111;&#111;&#109;&#44;&#32;&#73;&#39;&#109;&#32;&#110;&#111;&#116;&#32;&#111;&#108;&#100;&#101;&#114;<br />&#73;&#110;&#32;&#121;&#111;&#117;&#114;&#32;&#101;&#121;&#101;&#115;&#44;&#32;&#73;&#39;&#109;&#32;&#110;&#111;&#116;&#32;&#119;&#111;&#114;&#116;&#104;&#32;&#105;&#116;<br />&#71;&#105;&#109;&#109;&#101;&#32;&#98;&#97;&#99;&#107;&#32;&#109;&#121;&#32;&#97;&#108;&#99;&#111;&#104;&#111;&#108;<br />&#71;&#105;&#109;&#109;&#101;&#32;&#98;&#97;&#99;&#107;&#32;&#109;&#121;&#32;&#97;&#108;&#99;&#111;&#104;&#111;&#108;<br />&#71;&#105;&#109;&#109;&#101;&#32;&#98;&#97;&#99;&#107;&#32;&#109;&#121;&#32;&#97;&#108;&#99;&#111;&#104;&#111;&#108;<br />&#71;&#105;&#109;&#109;&#101;&#32;&#98;&#97;&#99;&#107;&#32;&#109;&#121;&#32;&#97;&#108;&#99;&#111;&#104;&#111;&#108;<br />&#71;&#105;&#109;&#109;&#101;&#32;&#98;&#97;&#99;&#107;&#32;&#109;&#121;&#32;&#97;&#108;&#99;&#111;&#104;&#111;&#108;<br />&#71;&#105;&#109;&#109;&#101;&#32;&#98;&#97;&#99;&#107;&#32;&#109;&#121;&#32;&#97;&#108;&#99;&#111;&#104;&#111;&#108;<br />&#71;&#105;&#109;&#109;&#101;&#32;&#98;&#97;&#99;&#107;&#32;&#109;&#121;&#32;&#97;&#108;&#99;&#111;&#104;&#111;&#108;<br /><br />&#72;&#101;&#97;&#108;&#32;&#97;&#32;&#109;&#105;&#108;&#108;&#105;&#111;&#110;&#44;&#32;&#107;&#105;&#108;&#108;&#32;&#97;&#32;&#109;&#105;&#108;&#108;&#105;&#111;&#110;<br />&#72;&#101;&#97;&#108;&#32;&#97;&#32;&#109;&#105;&#108;&#108;&#105;&#111;&#110;&#44;&#32;&#107;&#105;&#108;&#108;&#32;&#97;&#32;&#109;&#105;&#108;&#108;&#105;&#111;&#110;<br />&#72;&#101;&#97;&#108;&#32;&#97;&#32;&#109;&#105;&#108;&#108;&#105;&#111;&#110;&#44;&#32;&#107;&#105;&#108;&#108;&#32;&#97;&#32;&#109;&#105;&#108;&#108;&#105;&#111;&#110;'''
+DATA_BASEPATH = '/Users/yiz-mac/datascienceproject/alllyrics/'
+OUTPUT_BASEPATH = '/Users/yiz-mac/datascienceproject/parsed_lyrics/'
+with open("base_song_flat.json", "r") as f:
+    base_song_flat = json.load(f)
+with open("base_artist.json", "r") as f:
+    base_artist = json.load(f)
+with open("base_album.json", "r") as f:
+    base_album = json.load(f)
+with open("base_simple_song.json", "r") as f:
+    base_simple_song = json.load(f)
+
+executor = concurrent.futures.ProcessPoolExecutor()
 
 
-def extract_text(a):
-    w = []
-    for i in a.split(';'):
+def handle_album(htmlcontent, album_name, artistobj):
+    albobj = deepcopy(base_album)
+    albobj['title'] = album_name
+    albumhtml = html.fromstring(htmlcontent)
+    songs_in_album = [dict(x.attrib) for x in albumhtml.cssselect("ol li a")]
+    for s in songs_in_album:
+        if artistobj['unique_name'] not in s['href'] or 'redlink' in s['href']:
+            continue
+        s['href'] = s['href'].replace("/wiki/", "")
+        albobj['songs'].append(s)
+    albumplainlinks = albumhtml.cssselect('.plainlinks table a')
+    for link in albumplainlinks:
+        if dict(link.attrib)['title'].startswith("Category:Albums"):
+            albobj['year'] = int(link.text)
+        elif dict(link.attrib)['title'].startswith("Category:Genre"):
+            albobj['genre'] = link.text
+
+    return albobj
+
+
+def handle_song(htmlcontent, currsong, artistobj):
+    htmlobj = html.fromstring(htmlcontent)
+    songobj = deepcopy(base_simple_song)
+    songobj['href'] = currsong
+    songobj['title'] = htmlobj.cssselect('div[id="song-header-container"] div b')[0].text.strip()
+    lyrics = html.tostring(htmlobj.cssselect(".lyricbox")[0]).decode()
+    lyrics = lyrics.replace('<div class="lyricbox">', '').replace('</div>', ""). \
+        replace('<div class="lyricsbreak">', '').replace("<br>", '\n')
+    songobj["lyrics"] = lyrics
+    return songobj
+
+
+def handle_song_or_album(artistobj, song_or_album):
+    kind = None
+    with open(os.path.join(DATA_BASEPATH, "%s:%s" % (artistobj['unique_name'], song_or_album))) as f:
+        fcontent = f.read()
+    htmlcontent = gzip.decompress(base64.b64decode(fcontent))
+    if "song is a cover of" in htmlcontent.decode():
+        return
+    if "'lyricbox'" in htmlcontent.decode() or '"lyricbox"' in htmlcontent.decode():
+        kind = 'song'
+        return kind, handle_song(htmlcontent, song_or_album, artistobj)
+    else:
+        kind = 'album'
+        return kind, handle_album(htmlcontent, song_or_album, artistobj)
+        # if ":" not in song_or_album:
+        #     handle_band(htmlcontent)
+        # elif "(" in song_or_album and ")" in song_or_album:
+        #     handle_album(htmlcontent)
+        # else:
+        #     handle_song(htmlcontent)
+
+
+def get_data_dict():
+    res_dict = defaultdict(lambda: [])
+    try:
+        with open("allfiles.json", 'r') as f:
+            retval = json.load(f)
+    except:
+        logging.exception("Failed reading allfiles.json, reverting to scan files")
+        allfiles = glob.glob(os.path.join(DATA_BASEPATH, '*'))
+        for fp in allfiles:
+            if fp.count(":") > 1:
+                continue
+            fp = fp.replace(DATA_BASEPATH, "")
+            band_and_song_or_album = fp.split(":")
+            band = band_and_song_or_album[0]
+            if len(band_and_song_or_album) > 1:
+                res_dict[band].extend(band_and_song_or_album[1:])
+        with open("allfiles.json", 'w') as f:
+            json.dump(dict(res_dict), f, indent=True)
+        retval = dict(res_dict)
+    return retval
+
+
+def build_album_reverse_index(entities):
+    idx = {}
+    for _, album in [x for x in entities if x[0] == 'album']:
+        songsinalbum = album['songs']
+        del album['songs']
+        for song in songsinalbum:
+            idx[song['href']] = album
+    return idx
+
+
+def handle_band(artist_songs_and_albums):
+    artist = artist_songs_and_albums[0]
+    songs_and_albums = artist_songs_and_albums[1]
+    artist_obj = deepcopy(base_artist)
+    del artist_obj['albums']
+    artist_obj['unique_name'] = artist
+    entities = []
+    for song_or_album in songs_and_albums:
+        creation = handle_song_or_album(artist_obj, song_or_album)
+        if creation is not None:
+            entities.append(creation)
+    album_revidx = build_album_reverse_index(entities)
+    flat_songs = []
+    for _, song in [x for x in entities if x[0] == 'song']:
         try:
-            if i.replace(' ', '').startswith('<br/>'):
-                w.append('\n')
-            ch = chr(int(i.split('#')[-1]))
-            w.append(ch)
+            album_of_song = album_revidx["%s:%s" % (artist, song['href'])]
         except:
             continue
-    return ''.join(w)
-
-
-def handle_band(htmlcontent):
-    pass
-
-
-def handle_album(htmlcontent):
-    pass
-
-
-def handle_song(htmlcontent):
-    elem = html.fromstring(htmlcontent).xpath('./')
-
-
-def handle_file(fp):
-    with open(fp) as f:
-        fcontent = f.read()
-        htmlcontent = gzip.decompress(base64.b64decode(fcontent))
-        if ":" not in fp:
-            handle_band(htmlcontent)
-        elif "(" in fp and ")" in fp:
-            handle_album(htmlcontent)
-        else:
-            handle_song(htmlcontent)
+        flatobj = deepcopy(base_song_flat)
+        flatobj.update(song)
+        flatobj['album'].update(album_of_song)
+        flatobj['artist'].update(artist_obj)
+        flat_songs.append(flatobj)
+    if len(flat_songs) > 0:
+        with gzip.GzipFile(os.path.join(OUTPUT_BASEPATH, artist), 'w') as f:
+            f.write(json.dumps(flat_songs).encode())
+    print(artist)
 
 
 if __name__ == '__main__':
-    # allfiles = glob.glob('/Users/yiz-mac/datascienceproject/alllyrics/*')
-    # for f in allfiles:
-    #     handle_file(f)
-    # print(len(allfiles))
-    print(extract_text(t))
-
-song_dict = {
-    "id": "",
-    "band": {
-        "id": "",
-        "name": ""
-    },
-    "lyrics": "",
-    "album": {
-        "name": "",
-        "year": 0
-    }
-}
+    allfiles = get_data_dict()
+    # band = 'Red_Hot_Chili_Peppers'
+    # handle_band('Red_Hot_Chili_Peppers', allfiles['Red_Hot_Chili_Peppers'])
+    del allfiles['']
+    pardata = [(artist, songs_and_albums) for artist, songs_and_albums in allfiles.items()]
+    executor.map(handle_band, pardata)
