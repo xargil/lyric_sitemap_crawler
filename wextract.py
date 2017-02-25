@@ -56,7 +56,6 @@ def handle_song(htmlcontent, currsong, artistobj):
 
 
 def handle_song_or_album(artistobj, song_or_album):
-    kind = None
     with open(os.path.join(DATA_BASEPATH, "%s:%s" % (artistobj['unique_name'], song_or_album))) as f:
         fcontent = f.read()
     htmlcontent = gzip.decompress(base64.b64decode(fcontent))
