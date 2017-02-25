@@ -12,22 +12,18 @@ from __future__ import print_function
 import os
 import random
 import sys
-
+from utils import sample, ES_INDEX, ES_TYPE
 import elasticsearch
 import numpy as np
 from keras.layers import Dense, Activation
 from keras.layers import LSTM
 from keras.models import Sequential
 from keras.optimizers import RMSprop
-from langdetect import DetectorFactory
 from langdetect import detect
 from langdetect.lang_detect_exception import LangDetectException
 import re
+import pickle
 
-DetectorFactory.seed = 0
-# factory = DetectorFactory()
-# profile_en = LangProfile('en')
-# factory.add_profile(profile_en, 0, 3)
 maxlen = 40
 step = 3
 sentences = []
@@ -46,11 +42,9 @@ def handle_from_test(text):
 
 es = elasticsearch.Elasticsearch()
 DATA_BASEPATH = os.environ.get('DATA_BASEPATH')
-ES_INDEX = 'allsonglyrics'
-ES_TYPE = 'song'
 
 q = {
-    "size": 6000,
+    "size": 5000,
     "query": {
         "function_score": {
             "query": {
@@ -98,6 +92,8 @@ print('total chars:', len(chars))
 char_indices = dict((c, i) for i, c in enumerate(chars))
 indices_char = dict((i, c) for i, c in enumerate(chars))
 
+with open("chars_and_indices.pcl", "wb") as f:
+    pickle.dump(chars, f)
 print('Vectorization...')
 X = np.zeros((len(sentences), maxlen, len(chars)), dtype=np.bool)
 y = np.zeros((len(sentences), len(chars)), dtype=np.bool)
@@ -117,14 +113,7 @@ optimizer = RMSprop(lr=0.01)
 model.compile(loss='categorical_crossentropy', optimizer=optimizer)
 model.load_weights("/Users/yiz-mac/rapmodel_3")
 
-def sample(preds, temperature=1.0):
-    # helper function to sample an index from a probability array
-    preds = np.asarray(preds).astype('float64')
-    preds = np.log(preds) / temperature
-    exp_preds = np.exp(preds)
-    preds = exp_preds / np.sum(exp_preds)
-    probas = np.random.multinomial(1, preds, 1)
-    return np.argmax(probas)
+
 
 
 # train the model, output generated text after each iteration
