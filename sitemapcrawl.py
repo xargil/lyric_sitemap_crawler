@@ -1,7 +1,6 @@
 import base64
 import gzip
 
-import redis
 from scrapy import cmdline
 from scrapy.spiders import SitemapSpider
 import os
@@ -22,5 +21,4 @@ class MySpider(SitemapSpider):
             f.write(writable)
 
 
-# --set JOBDIR=lyrics2
-cmdline.execute("scrapy runspider sitemapcrawl.py --set JOBDIR=lyrics".split())
+cmdline.execute("scrapy runspider sitemapcrawl.py --set DOWNLOAD_DELAY=10 --set JOBDIR=lyrics".split())
