@@ -4,6 +4,8 @@ import numpy as np
 import pickle
 import random
 from keras.models import load_model
+from keras.utils.visualize_util import plot
+
 from utils import sample, get_rand_song
 
 maxlen = 40

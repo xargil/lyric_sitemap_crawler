@@ -23,6 +23,7 @@ from langdetect import detect
 from langdetect.lang_detect_exception import LangDetectException
 import re
 import pickle
+from keras.utils.visualize_util import plot
 
 maxlen = 40
 step = 3
