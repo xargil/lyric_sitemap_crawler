@@ -1,7 +1,7 @@
 ## Synopsis
 
 This is a final project for the Data Science class.
-It depends on a running elasticsearch on localhost.
+It requires a running elasticsearch on localhost.
 
 ## Installation
 
