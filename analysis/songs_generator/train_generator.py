@@ -1,12 +1,3 @@
-'''Example script to generate text from Nietzsche's writings.
-At least 20 epochs are required before the generated text
-starts sounding coherent.
-It is recommended to run this script on GPU, as recurrent
-networks are quite computationally intensive.
-If you try this script on new data, make sure your corpus
-has at least ~100k characters. ~1M is better.
-'''
-
 from __future__ import print_function
 
 import os
@@ -44,12 +35,12 @@ es = elasticsearch.Elasticsearch()
 DATA_BASEPATH = os.environ.get('DATA_BASEPATH')
 
 q = {
-    "size": 5000,
+    "size": 6000,
     "query": {
         "function_score": {
             "query": {
                 "match": {
-                    "album.genre": "Hip Hop"
+                    "album.genre": "Punk Rock"
                 }
             },
             "random_score": {"seed": 1376773391128418000}
