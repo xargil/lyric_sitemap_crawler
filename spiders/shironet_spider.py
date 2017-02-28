@@ -82,6 +82,7 @@ class ShironetSpider(scrapy.Spider):
 
             song = {
                 "title": song_name,
+                "source": "shironet",
                 "album": {
                     "title": album_name,
                     "year": album_year
