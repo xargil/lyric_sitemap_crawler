@@ -1,5 +1,11 @@
 import elasticsearch
+from nltk import collections
 from analysis import ES_INDEX, ES_TYPE
+import nltk
+from nltk.corpus import stopwords
+import pickle
+
+NUM_OF_SONGS = 1000
 
 es = elasticsearch.Elasticsearch()
 # Bring 8 most common genres from the index:
@@ -52,3 +58,27 @@ for genre in res['aggregations']['genres']['buckets']:
     unq = vocabsize['aggregations']['uniquecounts']['value']
     total = vocabsize['aggregations']['counts']['value']
     print("%s\t%s\t%s\t%s" % (genre['key'], unq / total, total, unq))
+
+for genre in res['aggregations']['genres']['buckets']:
+    curr_gnere = genre["key"]
+    genre_songs_list = []
+
+    songs_by_genre = {
+      "query": {
+        "match": {
+          "album.genre": curr_gnere
+        }
+      },
+      "size": NUM_OF_SONGS
+    }
+    res = es.search(index=ES_INDEX, doc_type=ES_TYPE, body=songs_by_genre)
+    for song in res["hits"]["hits"]:
+        lyrics = song["_source"]["lyrics"]
+        tokens = nltk.word_tokenize(lyrics)
+        filtered_tokens = [token for token in tokens if token not in stopwords.words('english')]
+        tokens_counter = collections.Counter(filtered_tokens)
+        tuple_list = list(tokens_counter.items())
+        genre_songs_list.append(tuple_list)
+
+    with open('/home/omri/Dev/Python/IntroToDS/Data/pickle_list/' + curr_gnere + '.pickle', 'wb') as handle:
+        pickle.dump(genre_songs_list, handle, protocol=pickle.HIGHEST_PROTOCOL)
