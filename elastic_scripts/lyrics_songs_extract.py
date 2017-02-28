@@ -67,12 +67,6 @@ def handle_song_or_album(artistobj, song_or_album):
     else:
         kind = 'album'
         return kind, handle_album(htmlcontent, song_or_album, artistobj)
-        # if ":" not in song_or_album:
-        #     handle_band(htmlcontent)
-        # elif "(" in song_or_album and ")" in song_or_album:
-        #     handle_album(htmlcontent)
-        # else:
-        #     handle_song(htmlcontent)
 
 
 def get_data_dict():

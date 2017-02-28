@@ -14,6 +14,7 @@ class MySpider(SitemapSpider):
     sitemap_urls = ['http://lyrics.wikia.com/sitemap-newsitemapxml-index.xml']
     sitemap_rules = [('/wiki/', 'parse_sitemap_url')]
 
+    # The function that is called for each site in the sitemap.
     def parse_sitemap_url(self, response):
         fname = response.url.split('/')[-1]
         print(response)

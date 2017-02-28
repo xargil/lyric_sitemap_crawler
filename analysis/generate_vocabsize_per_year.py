@@ -21,7 +21,7 @@ get_all_genres = {
     }
 }
 res = es.search(index=ES_INDEX, doc_type=ES_TYPE, body=get_all_genres)
-print("%s\t%s" % ("Genre", "Lexical Richness"))
+print("%s\t%s\t%s\t%s" % ("Genre", "Lexical Richness", "Num words in songs", "Num distinct words in songs"))
 
 # Generate Lexical Richness ratio per year:
 for y in range(1970, 2008, 1):
@@ -48,5 +48,7 @@ for y in range(1970, 2008, 1):
         }
     }
     vocabsize = es.search(index=ES_INDEX, doc_type=ES_TYPE, body=vocab_per_genre)
-    print("%s\t%s" % (
-        y, vocabsize['aggregations']['uniquecounts']['value'] / vocabsize['aggregations']['counts']['value']))
+    unq = vocabsize['aggregations']['uniquecounts']['value']
+    total = vocabsize['aggregations']['counts']['value']
+    print("%s\t%s\t%s\t%s" % (
+        y, unq / total, total, unq))

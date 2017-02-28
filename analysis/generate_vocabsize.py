@@ -21,7 +21,7 @@ get_all_genres = {
 }
 
 res = es.search(index=ES_INDEX, doc_type=ES_TYPE, body=get_all_genres)
-print("%s\t%s" % ("Genre", "Vocabulary Size"))
+print("%s\t%s\t%s\t%s" % ("Genre", "Lexical Richness", "Num words in songs", "Num distinct words in songs"))
 # Generate vocab ratio per genre:
 for genre in res['aggregations']['genres']['buckets']:
     vocab_per_genre = {
@@ -34,7 +34,7 @@ for genre in res['aggregations']['genres']['buckets']:
                     "lte": 2006
                 }
             }}
-        ]}}, "size": 0, "terminate_after": 1000,
+        ]}}, "size": 0, "terminate_after": 100,
         "aggs": {
             "uniquecounts": {
                 "cardinality": {
@@ -49,6 +49,6 @@ for genre in res['aggregations']['genres']['buckets']:
         }
     }
     vocabsize = es.search(index=ES_INDEX, doc_type=ES_TYPE, body=vocab_per_genre)
-    print("%s\t%s" % (
-        genre['key'],
-        vocabsize['aggregations']['uniquecounts']['value'] / vocabsize['aggregations']['counts']['value']))
+    unq = vocabsize['aggregations']['uniquecounts']['value']
+    total = vocabsize['aggregations']['counts']['value']
+    print("%s\t%s\t%s\t%s" % (genre['key'], unq / total, total, unq))

@@ -2,7 +2,7 @@ import numpy as np
 import elasticsearch
 import random
 from langdetect import detect
-from langdetect.lang_detect_exception import LangDetectException
+
 ES_INDEX = 'allsonglyrics'
 ES_TYPE = 'song'
 
@@ -25,6 +25,7 @@ q = {
 def sample(preds, temperature=1.0):
     # helper function to sample an index from a probability array
     preds = np.asarray(preds).astype('float64')
+    preds += 1e-20
     preds = np.log(preds) / temperature
     exp_preds = np.exp(preds)
     preds = exp_preds / np.sum(exp_preds)
