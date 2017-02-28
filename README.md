@@ -15,4 +15,4 @@ analysys/generate_vocabsize_per_year.py
 
 ## Contributors
 
-Yizhar Gilboa (xargil), Omri Avrahami (), Amit Mandelbaum (). 
+Yizhar Gilboa (https://github.com/xargil), Omri Avrahami (https://github.com/devomri), Amit Mandelbaum (https://github.com/mangate). 
