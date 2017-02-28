@@ -8,6 +8,7 @@ import os
 BASE_OUTPUT_DIR = os.environ.get("BASE_OUTPUT_DIR")
 
 
+# Spider that crawls lyrics.wikia by their sitemap
 class MySpider(SitemapSpider):
     name = 'lyrics'
     sitemap_urls = ['http://lyrics.wikia.com/sitemap-newsitemapxml-index.xml']
@@ -21,4 +22,4 @@ class MySpider(SitemapSpider):
             f.write(writable)
 
 
-cmdline.execute("scrapy runspider sitemapcrawl.py --set DOWNLOAD_DELAY=10 --set JOBDIR=lyrics".split())
+cmdline.execute("scrapy runspider sitemapcrawl.py --set DOWNLOAD_DELAY=2 --set JOBDIR=lyrics".split())
