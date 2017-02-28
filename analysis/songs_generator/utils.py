@@ -25,6 +25,7 @@ q = {
 def sample(preds, temperature=1.0):
     # helper function to sample an index from a probability array
     preds = np.asarray(preds).astype('float64')
+    # Do this to avoid division by zero when calculating log
     preds += 1e-20
     preds = np.log(preds) / temperature
     exp_preds = np.exp(preds)

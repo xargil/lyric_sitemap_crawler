@@ -1,10 +1,10 @@
+import pickle
+import random
 import re
 import sys
 import numpy as np
-import pickle
-import random
 from keras.models import load_model
-from utils import sample, get_rand_song
+from analysis.songs_generator.utils import sample, get_rand_song
 
 maxlen = 40
 
@@ -17,16 +17,15 @@ lasttext = get_rand_song()
 lasttext = re.sub(r'[^a-zA-Z0-9 \n\r,.]', '', lasttext)
 model = load_model("rapmodel_4")
 start_index = random.randint(0, len(lasttext) - maxlen - 1)
-for diversity in [1.1]:
+for diversity in [0.9]:
     print()
     print('----- diversity:', diversity)
 
     generated = ''
     sentence = lasttext[start_index: start_index + maxlen]
-    # generated += sentence
     print('----- Generating with seed: "' + sentence + '":\n\n')
 
-    for i in range(1000):
+    for i in range(1200):
         x = np.zeros((1, maxlen, len(chars)))
         for t, char in enumerate(sentence):
             x[0, t, char_indices[char]] = 1.

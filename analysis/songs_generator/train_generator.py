@@ -10,9 +10,10 @@ has at least ~100k characters. ~1M is better.
 from __future__ import print_function
 
 import os
+import pickle
 import random
+import re
 import sys
-from utils import sample, ES_INDEX, ES_TYPE
 import elasticsearch
 import numpy as np
 from keras.layers import Dense, Activation
@@ -21,15 +22,13 @@ from keras.models import Sequential
 from keras.optimizers import RMSprop
 from langdetect import detect
 from langdetect.lang_detect_exception import LangDetectException
-import re
-import pickle
-from keras.utils.visualize_util import plot
+
+from analysis.songs_generator.utils import sample, ES_INDEX, ES_TYPE, get_rand_song
 
 maxlen = 40
 step = 3
 sentences = []
 next_chars = []
-lasttext = None
 
 
 def handle_from_test(text):
@@ -58,11 +57,10 @@ q = {
     }
 }
 
+# Get all relevant data from elasticsearch:
 page = es.search(index=ES_INDEX, doc_type=ES_TYPE, body=q, params={"scroll": "10m"})
-
 sid = page['_scroll_id']
 scroll_size = page['hits']['total']
-
 # Start scrolling
 charlist = set()
 # while scroll_size > 0:
@@ -78,7 +76,6 @@ for _ in range(1):
             continue
         if detected_lang != 'en':
             continue
-        lasttext = text
         handle_from_test(text)
     print("Scrolling...")
     page = es.scroll(scroll_id=sid, scroll='10m')
@@ -103,7 +100,7 @@ for i, sentence in enumerate(sentences):
         X[i, t, char_indices[char]] = 1
     y[i, char_indices[next_chars[i]]] = 1
 
-# build the model: a single LSTM
+# build the model: a single LSTM connected to a dense layer with the number of characters.
 print('Build model...')
 model = Sequential()
 model.add(LSTM(128, input_shape=(maxlen, len(chars))))
@@ -112,16 +109,17 @@ model.add(Activation('softmax'))
 
 optimizer = RMSprop(lr=0.01)
 model.compile(loss='categorical_crossentropy', optimizer=optimizer)
+
+# Optional: load from a previously trained network
 model.load_weights("/Users/yiz-mac/rapmodel_3")
 
-
-
-
-# train the model, output generated text after each iteration
+# train the model for one epoch at a time, output generated text after each iteration
 for iteration in range(1, 60):
+    lasttext = get_rand_song()
     print()
     print('-' * 50)
     print('Iteration', iteration)
+    # Train a single epoch and save the model
     model.fit(X, y, batch_size=512, nb_epoch=1)
     model.save("/tmp/result")
     start_index = random.randint(0, len(lasttext) - maxlen - 1)
@@ -136,7 +134,8 @@ for iteration in range(1, 60):
         print('----- Generating with seed: "' + sentence + '"')
         sys.stdout.write(generated)
 
-        for i in range(400):
+        # After each epoch print a sample for generation so we could manually eval the model.
+        for i in range(600):
             x = np.zeros((1, maxlen, len(chars)))
             for t, char in enumerate(sentence):
                 x[0, t, char_indices[char]] = 1.
