@@ -1,15 +1,8 @@
 import elasticsearch
-# from pytagcloud import create_tag_image, make_tags
-from nltk.corpus import stopwords
-from wordcloud import WordCloud, STOPWORDS
-import matplotlib.pyplot as plt
-
 from analysis import ES_INDEX, ES_TYPE
-from spacy import en
-
-stopwords = set(list(en.STOP_WORDS) + ["i'm", "it's", "you're", "don't", "i've", "there's", "we're", "that's", "ain't"])
 
 es = elasticsearch.Elasticsearch()
+# Bring 8 most common genres from the index:
 get_all_genres = {
     "query": {
         "query_string": {
@@ -29,6 +22,7 @@ get_all_genres = {
 
 res = es.search(index=ES_INDEX, doc_type=ES_TYPE, body=get_all_genres)
 print("%s\t%s" % ("Genre", "Vocabulary Size"))
+# Generate vocab ratio per genre:
 for genre in res['aggregations']['genres']['buckets']:
     vocab_per_genre = {
         "query": {"bool": {"must": [
@@ -56,4 +50,5 @@ for genre in res['aggregations']['genres']['buckets']:
     }
     vocabsize = es.search(index=ES_INDEX, doc_type=ES_TYPE, body=vocab_per_genre)
     print("%s\t%s" % (
-    genre['key'], vocabsize['aggregations']['uniquecounts']['value'] / vocabsize['aggregations']['counts']['value']))
+        genre['key'],
+        vocabsize['aggregations']['uniquecounts']['value'] / vocabsize['aggregations']['counts']['value']))

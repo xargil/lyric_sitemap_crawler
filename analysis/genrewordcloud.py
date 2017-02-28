@@ -1,15 +1,16 @@
 import elasticsearch
-# from pytagcloud import create_tag_image, make_tags
-from nltk.corpus import stopwords
-from wordcloud import WordCloud, STOPWORDS
+from wordcloud import WordCloud
 import matplotlib.pyplot as plt
-
 from analysis import ES_INDEX, ES_TYPE
 from spacy import en
 
-stopwords = set(list(en.STOP_WORDS) + ["i'm", "it's", "you're", "don't", "i've", "there's", "we're", "that's", "ain't"])
-
+# Stopwords and other words we don't want to appear in the word cloud:
+stopwords = set(
+    list(en.STOP_WORDS) + ["i'm", "it's", "you're", "don't", "i've", "there's", "we're", "that's", "ain't", "i'll",
+                           "she's"])
 es = elasticsearch.Elasticsearch()
+
+# Bring 8 most common genres from the index:
 get_all_genres = {
     "query": {
         "query_string": {
@@ -28,7 +29,9 @@ get_all_genres = {
 }
 
 res = es.search(index=ES_INDEX, doc_type=ES_TYPE, body=get_all_genres)
+# Generate word cloud for each genre
 for genre in res['aggregations']['genres']['buckets']:
+    # Get list of 100 top "important" terms for the genre from years 1950 to 2006
     cloud_per_genre = {
         "query": {"bool": {"must": [
             {"match": {
@@ -36,7 +39,7 @@ for genre in res['aggregations']['genres']['buckets']:
             }}, {"range": {
                 "album.year": {
                     "gte": 1950,
-                    "lte": 2017
+                    "lte": 2006
                 }
             }}
         ]}}, "size": 0,
