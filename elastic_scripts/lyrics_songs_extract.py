@@ -11,6 +11,8 @@ import os
 
 DATA_BASEPATH = '/Users/yiz-mac/datascienceproject/alllyrics/'
 OUTPUT_BASEPATH = '/Users/yiz-mac/datascienceproject/parsed_lyrics/'
+
+# Load JSON templates for all object types
 with open("base_song_flat.json", "r") as f:
     base_song_flat = json.load(f)
 with open("base_artist.json", "r") as f:
@@ -20,9 +22,11 @@ with open("base_album.json", "r") as f:
 with open("base_simple_song.json", "r") as f:
     base_simple_song = json.load(f)
 
+# Parallelism coordinator
 executor = concurrent.futures.ProcessPoolExecutor()
 
 
+# Turn each album from HTML to album object
 def handle_album(htmlcontent, album_name, artistobj):
     albobj = deepcopy(base_album)
     albobj['title'] = album_name
@@ -43,6 +47,7 @@ def handle_album(htmlcontent, album_name, artistobj):
     return albobj
 
 
+# Turn each song from HTML to song object
 def handle_song(htmlcontent, currsong, artistobj):
     htmlobj = html.fromstring(htmlcontent)
     songobj = deepcopy(base_simple_song)
@@ -55,6 +60,7 @@ def handle_song(htmlcontent, currsong, artistobj):
     return songobj
 
 
+# Each page may be either a song or an album. Handle accordingly by characteristics.
 def handle_song_or_album(artistobj, song_or_album):
     with open(os.path.join(DATA_BASEPATH, "%s:%s" % (artistobj['unique_name'], song_or_album))) as f:
         fcontent = f.read()
@@ -69,6 +75,7 @@ def handle_song_or_album(artistobj, song_or_album):
         return kind, handle_album(htmlcontent, song_or_album, artistobj)
 
 
+# Get all data from disk and persist it in a JSON listing all files, since it is an expensive operation.
 def get_data_dict():
     res_dict = defaultdict(lambda: [])
     try:
@@ -91,6 +98,7 @@ def get_data_dict():
     return retval
 
 
+# Create a mapping between a song and the album that contains it.
 def build_album_reverse_index(entities):
     idx = {}
     for _, album in [x for x in entities if x[0] == 'album']:
@@ -101,6 +109,7 @@ def build_album_reverse_index(entities):
     return idx
 
 
+# Parse all data of a single band to a single JSON file on disk.
 def handle_band(artist_songs_and_albums):
     artist = artist_songs_and_albums[0]
     songs_and_albums = artist_songs_and_albums[1]

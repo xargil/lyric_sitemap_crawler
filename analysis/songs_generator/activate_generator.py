@@ -8,14 +8,14 @@ from analysis.songs_generator.utils import sample, get_rand_song
 
 maxlen = 40
 
-with open("chars_and_indices.pcl", "rb") as f:
+with open("/Users/yiz-mac/PycharmProjects/datascienceproject/analysis/songs_generator/chars_and_indices.pcl", "rb") as f:
     chars = pickle.load(f)
 char_indices = dict((c, i) for i, c in enumerate(chars))
 indices_char = dict((i, c) for i, c in enumerate(chars))
 
 lasttext = get_rand_song()
 lasttext = re.sub(r'[^a-zA-Z0-9 \n\r,.]', '', lasttext)
-model = load_model("rapmodel_4")
+model = load_model("punkgenerator_3")
 start_index = random.randint(0, len(lasttext) - maxlen - 1)
 for diversity in [0.9]:
     print()

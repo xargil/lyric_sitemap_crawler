@@ -22,7 +22,8 @@ sentences = []
 next_chars = []
 
 
-def handle_from_test(text):
+# Handles a sentence from elasticsearch and outputs sequences from it.
+def handle_from_elasticsearch(text):
     global chars, char_indices, indices_char, maxlen, sentences, next_chars
     # cut the text in semi-redundant sequences of maxlen characters
     for i in range(0, len(text) - maxlen, step):
@@ -67,7 +68,7 @@ for _ in range(1):
             continue
         if detected_lang != 'en':
             continue
-        handle_from_test(text)
+        handle_from_elasticsearch(text)
     print("Scrolling...")
     page = es.scroll(scroll_id=sid, scroll='10m')
     # Update the scroll ID
@@ -102,7 +103,7 @@ optimizer = RMSprop(lr=0.01)
 model.compile(loss='categorical_crossentropy', optimizer=optimizer)
 
 # Optional: load from a previously trained network
-model.load_weights("/Users/yiz-mac/rapmodel_3")
+model.load_weights("/Users/yiz-mac/punkgenerator_3")
 
 # train the model for one epoch at a time, output generated text after each iteration
 for iteration in range(1, 60):
